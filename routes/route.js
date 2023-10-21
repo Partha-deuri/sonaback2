@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser } = require('../controller/controllers.js');
+const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser } = require('../controller/controllers.js');
 const { registerMail } = require('../controller/mailer.js');
 
 
@@ -18,10 +18,14 @@ const upload = multer({ storage: storage });
 
 router.post("/cosplayregister",cosplayRegister);
 router.get("/cosplaygetdata",cosplayGetUser); 
-router.post("/upload-files", upload.single("file"),cosplayRegisterUpload);
+// router.post("/upload-files", upload.single("file"),cosplayRegisterUpload);
 // router.get("/get-files", cosplayUsers);
 router.get("/cosplayverify",authUser, cosplayVerify);
 
+//sona
+router.post("/sonaregister",sonaRegister);
+router.get("/sonaverify",authUser, sonaVerify);
+router.get("/sonagetdata",sonaGetUser); 
 
 // get
 router.get('/', (req, res) => { 
@@ -59,6 +63,7 @@ router.post('/admin/register', adminRegister);
 router.post('/admin/user', getUserDetailsAdmin);
 // admin
 router.get('/admin', adminGetClubs);
+router.get('/admin/userall', adminGetAllUsers);
 router.get('/admin/:club', adminGetEvents)
 router.get('/admin/:club/:event', adminGetUsers);
 
