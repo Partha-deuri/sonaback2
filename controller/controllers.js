@@ -528,7 +528,7 @@ const sonaRegister = async (req, res) => {
         if (oldUser) {
             return res.status(401).send({ msg: "already registered" });  
         }
-        await Cosplay.create({
+        await Sona.create({
             name, email, phone,gender,age
         }).then(() => {
             return res.status(201).send({ msg: "registered successfully" })
