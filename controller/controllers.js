@@ -12,11 +12,13 @@ require('../model/userModel');
 require('../model/eventModel');
 require('../model/adminModel');
 require('../model/cosplayModel');
+require('../model/sonaModel');
 
 const User = mongoose.model('Users');
 const Event = mongoose.model('Events');
 const Admin = mongoose.model('Admins');
 const Cosplay = mongoose.model('Cosplay');
+const Sona = mongoose.model('Sona');
 
 // middlewareverifyuser
 
@@ -401,6 +403,13 @@ const getUserDetailsAdmin = async (req, res) => {
     }
 }
 
+const adminGetAllUsers = async (req,res) =>{
+    await User.find({},{_id:0,events:0,password:0,__v:0}).then(data=>{
+        console.log(data)
+        return res.status(201).json({data});
+    })
+}
+
 const adminGetUsers = async (req, res) => {
     try {
         const { club, event } = req.params;
@@ -506,6 +515,66 @@ const cosplayVerify = async (req, res) => {
     }
 }
 
+
+
+// sona
+
+
+const sonaRegister = async (req, res) => {
+    try {
+        const { email, name, phone, gender, age } = req.body;
+        // console.log(email,name,phone,gender,cosplayCharacter,paymentImg);
+        const oldUser = await Sona.findOne({ email });
+        if (oldUser) {
+            return res.status(401).send({ msg: "already registered" });  
+        }
+        await Cosplay.create({
+            name, email, phone,gender,age
+        }).then(() => {
+            return res.status(201).send({ msg: "registered successfully" })
+        }).catch(err => {
+           return res.status(405).send({ msg: "Error" });
+        })
+        // return res.status(201).send({data:"success"})
+    } catch (error) {
+        return res.status(405).send({ error: error });
+    }
+}
+
+
+const sonaGetUser = async (req, res) => {
+    try {
+        await Sona.find({}, { _id: 0, __v: 0 }).then(data => {
+            // console.log(data);
+            res.status(201).send({ data });
+        })
+    } catch (err) { 
+        res.status(405).send({ error: err });
+    }
+}
+const sonaVerify = async (req, res) => {
+    try {
+        const { email } = req.user;
+        await User.findOne({email}, { _id: 0, __v: 0 ,password:0,events:0}).then(async data => {
+        await Sona.findOne({email}).then(res=>{
+            if(res==null){
+                result = { result : "not registered"};
+            }else{
+                result = { result : "registered"};
+            }
+        }).catch (err=>{
+            result = { result : "not registered"};
+        })
+            console.log(data);
+            return res.status(201).send({ data:data,result:result });
+        })
+    } catch (err) {
+        res.status(405).send({ error: err }); 
+    }
+}
+
+
+
 module.exports = {
     login,
     register,
@@ -532,5 +601,9 @@ module.exports = {
     cosplayRegisterUpload,
     cosplayRegister,
     cosplayGetUser,
-    cosplayVerify
+    cosplayVerify,
+    adminGetAllUsers,
+    sonaGetUser,
+    sonaVerify,
+    sonaRegister
 }
