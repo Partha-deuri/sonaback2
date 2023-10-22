@@ -72,7 +72,7 @@ const register = async (req, res) => {
         }).then(() => {
             const userCurr = User.findOne({ email });
             const id = userCurr._id;
-            const token = jwt.sign({ email, id }, process.env.JWT_SECRET, { expiresIn: "1m" });
+            const token = jwt.sign({ email, id }, process.env.JWT_SECRET, { expiresIn: "2h" });
             console.log(id)
             req.app.locals.resetSession = false; // reset session
             res.status(201).send({ msg: "registered successfully", token, events: [] })
@@ -182,7 +182,7 @@ const login = async (req, res) => {
             return res.status(400).json({ msg: "error", error: "user not found" });
         }
         if (await bcrypt.compare(password, user.password)) {
-            const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "2h" });
             const prevEvents = user.events;
             if (res.status(201)) {
                 return res.status(201).json({ msg: "login successful", token: token, events: prevEvents });
@@ -326,7 +326,7 @@ const adminLogin = async (req, res) => {
             return res.status(400).json({ msg: "error", error: "user not found" });
         }
         if (await bcrypt.compare(password, admin.password)) {
-            const token = jwt.sign({ email: admin.email, name: admin.name }, process.env.JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign({ email: admin.email, name: admin.name }, process.env.JWT_SECRET, { expiresIn: "2h" });
             if (res.status(201)) {
                 return res.status(201).json({ msg: "login successful", token: token });
             } else {
@@ -353,7 +353,7 @@ const adminRegister = async (req, res) => {
                 password: encryptedPassword,
                 phone
             }).then(() => {
-                const token = jwt.sign({ email, name }, process.env.JWT_SECRET, { expiresIn: "12h" });
+                const token = jwt.sign({ email, name }, process.env.JWT_SECRET, { expiresIn: "2h" });
                 res.status(201).send({ msg: "registered successfully", token })
             }).catch(err => {
                 res.status(405).send({ msg: "admin not created" });
