@@ -404,7 +404,7 @@ const getUserDetailsAdmin = async (req, res) => {
 }
 
 const adminGetAllUsers = async (req,res) =>{
-    await User.find({},{_id:0,events:1,password:0,__v:0}).then(data=>{
+    await User.find({},{_id:0,password:0,__v:0}).then(data=>{
         console.log(data)
         return res.status(201).json({data});
     })
