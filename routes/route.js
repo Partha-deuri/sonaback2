@@ -34,7 +34,7 @@ router.get('/', (req, res) => {
 router.get('/user/:id', getUser);
 router.get('/generateOTP', localVariables, generateOTP);
 router.get('/verifyOTP', verifyOTP);
-router.get('/otprigister', otpRegister);
+router.get('/otpregister', otpRegister);
 router.get('/otpreset', otpReset);
 router.get('/findUser', findUser);
 router.get('/userExist', userForgotPassword)
