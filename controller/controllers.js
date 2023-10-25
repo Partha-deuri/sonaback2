@@ -44,7 +44,7 @@ const userForgotPassword = async (req, res) => {
         if (userExist) {
             return res.status(201).send({ name: userExist.name });
         } else {
-            return res.status(404).send({ msg: "doesn't exist" , name:"user not found"});
+            return res.status(401).send({ msg: "doesn't exist" });
         }
     } catch (err) {
         res.status(400).send(err);
@@ -55,7 +55,7 @@ const userForgotPassword = async (req, res) => {
 const register = async (req, res) => {
     // console.log(events);
     try {
-        // if (!req.app.locals.resetSession) return res.status(440).send({ msg: "error", error: "Session expired!" });
+        if (req.app.locals.registerSession.indexOf(email)===-1) return res.status(440).send({ msg: "error", error: "Session expired!" });
         const { name, email, password, phone, age, gender, institute, events } = req.body;
         const oldUser = await User.findOne({ email })
         if (oldUser) {
@@ -72,9 +72,9 @@ const register = async (req, res) => {
         }).then(() => {
             const userCurr = User.findOne({ email });
             const id = userCurr._id;
-            const token = jwt.sign({ email, id }, process.env.JWT_SECRET, { expiresIn: "2h" });
+            const token = jwt.sign({ email, id }, process.env.JWT_SECRET, { expiresIn: "1m" });
             console.log(id)
-            req.app.locals.resetSession = false; // reset session
+            req.app.locals.registerSession.filter(userss => userss !== email);
             res.status(201).send({ msg: "registered successfully", token, events: [] })
         }).catch(err => {
             res.status(405).send({ msg: "user not created" });
@@ -182,7 +182,7 @@ const login = async (req, res) => {
             return res.status(400).json({ msg: "error", error: "user not found" });
         }
         if (await bcrypt.compare(password, user.password)) {
-            const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "2h" });
+            const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
             const prevEvents = user.events;
             if (res.status(201)) {
                 return res.status(201).json({ msg: "login successful", token: token, events: prevEvents });
@@ -245,7 +245,8 @@ const updateUser = (req, res) => {
 const localVariables = (req, res, next) => {
     req.app.locals = {
         OTP: null,
-        resetSession: false
+        resetSession: [String],
+        registerSession: [String]
     }
     next();
 }
@@ -258,6 +259,17 @@ const generateOTP = async (req, res) => {
         res.send({ status: "error", error: "unable to generate otp" });
     }
 }
+const otpRegister = async (req,res) =>{
+    const {email} = req.body;
+    req.app.locals.registerSession = [...req.app.locals.registerSession, email];
+    res.status(201).send({msg:"otp verified"})
+}
+const otpReset = async (req,res) =>{
+    const {email} = req.body;
+    req.app.locals.reaetSession = [...req.app.locals.registerSession, email];
+    res.status(201).send({msg:"otp verified"})
+}
+
 const verifyOTP = async (req, res) => {
     const { code } = req.query;
     if (parseInt(req.app.locals.OTP) === parseInt(code)) {
@@ -279,14 +291,14 @@ const createResetSession = async (req, res) => {
 
 const resetPassword = async (req, res) => {
     try {
-        // if (!req.app.locals.resetSession) return res.status(440).send({ error: "Session expired!" });
         const { email, password } = req.body;
+        if (req.app.locals.resetSession.indexOf(email)===-1) return res.status(440).send({ error: "Session expired!" });
         try {
             const userExist = await User.findOne({ email })
             if (userExist) {
                 const hashedPassword = await bcrypt.hash(password, 10)
                 await User.findOneAndUpdate({ email }, { password: hashedPassword }).then(() => {
-                    req.app.locals.resetSession = false; // reset session
+                    req.app.locals.resetSession.filter(userss => userss !== email);
                     return res.status(201).send({ msg: "Record Updated...!" })
                 }).catch(err => {
                     return res.status(400).send({ error: "error" })
@@ -320,13 +332,14 @@ const verifyToken = async (req, res) => {
 // admin apis 
 const adminLogin = async (req, res) => {
     const { email, password } = req.body;
+    console.log(email,password," admin")
     try {
         const admin = await Admin.findOne({ email });
         if (!admin) {
             return res.status(400).json({ msg: "error", error: "user not found" });
         }
         if (await bcrypt.compare(password, admin.password)) {
-            const token = jwt.sign({ email: admin.email, name: admin.name }, process.env.JWT_SECRET, { expiresIn: "2h" });
+            const token = jwt.sign({ email: admin.email, name: admin.name }, process.env.JWT_SECRET, { expiresIn: "1h" });
             if (res.status(201)) {
                 return res.status(201).json({ msg: "login successful", token: token });
             } else {
@@ -353,7 +366,7 @@ const adminRegister = async (req, res) => {
                 password: encryptedPassword,
                 phone
             }).then(() => {
-                const token = jwt.sign({ email, name }, process.env.JWT_SECRET, { expiresIn: "2h" });
+                const token = jwt.sign({ email, name }, process.env.JWT_SECRET, { expiresIn: "12h" });
                 res.status(201).send({ msg: "registered successfully", token })
             }).catch(err => {
                 res.status(405).send({ msg: "admin not created" });
@@ -404,7 +417,7 @@ const getUserDetailsAdmin = async (req, res) => {
 }
 
 const adminGetAllUsers = async (req,res) =>{
-    await User.find({},{_id:0,password:0,__v:0}).then(data=>{
+    await User.find({},{_id:0,events:0,password:0,__v:0}).then(data=>{
         console.log(data)
         return res.status(201).json({data});
     })
@@ -605,5 +618,7 @@ module.exports = {
     adminGetAllUsers,
     sonaGetUser,
     sonaVerify,
-    sonaRegister
+    sonaRegister,
+    otpRegister,
+    otpReset
 }
