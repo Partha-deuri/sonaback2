@@ -44,7 +44,7 @@ const userForgotPassword = async (req, res) => {
         if (userExist) {
             return res.status(201).send({ name: userExist.name });
         } else {
-            return res.status(205).send({ msg: "doesn't exist" , name:"user not found"});
+            return res.status(404).send({ msg: "doesn't exist" , name:"user not found"});
         }
     } catch (err) {
         res.status(400).send(err);
