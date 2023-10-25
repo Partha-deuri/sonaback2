@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser } = require('../controller/controllers.js');
+const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser, otpRegister, otpReset } = require('../controller/controllers.js');
 const { registerMail } = require('../controller/mailer.js');
 
 
@@ -22,11 +22,10 @@ router.get("/cosplaygetdata",cosplayGetUser);
 // router.get("/get-files", cosplayUsers);
 router.get("/cosplayverify",authUser, cosplayVerify);
 
-//sona
+
 router.post("/sonaregister",sonaRegister);
 router.get("/sonaverify",authUser, sonaVerify);
 router.get("/sonagetdata",sonaGetUser); 
-
 // get
 router.get('/', (req, res) => { 
     res.status(201).json("api alive"); 
@@ -35,6 +34,8 @@ router.get('/', (req, res) => {
 router.get('/user/:id', getUser);
 router.get('/generateOTP', localVariables, generateOTP);
 router.get('/verifyOTP', verifyOTP);
+router.get('/otprigister', otpRegister);
+router.get('/otpreset', otpReset);
 router.get('/findUser', findUser);
 router.get('/userExist', userForgotPassword)
 router.get('/token/:token', verifyToken)
