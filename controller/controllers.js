@@ -292,7 +292,7 @@ const createResetSession = async (req, res) => {
 const resetPassword = async (req, res) => {
     try {
         const { email, password } = req.body;
-        if (req.app.locals.resetSession.indexOf(email)===-1) return res.status(440).send({ error: "Session expired!" });
+        // if (req.app.locals.resetSession.indexOf(email)===-1) return res.status(440).send({ error: "Session expired!" });
         try {
             const userExist = await User.findOne({ email })
             if (userExist) {
