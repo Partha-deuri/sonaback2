@@ -339,7 +339,7 @@ const adminLogin = async (req, res) => {
             return res.status(400).json({ msg: "error", error: "user not found" });
         }
         if (await bcrypt.compare(password, admin.password)) {
-            const token = jwt.sign({ email: admin.email, name: admin.name }, process.env.JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign({ email: admin.email, name: admin.name, secretKey: ADMIN_SECRETKEY }, process.env.JWT_SECRET, { expiresIn: "1h" });
             if (res.status(201)) {
                 return res.status(201).json({ msg: "login successful", token: token });
             } else {
@@ -381,6 +381,9 @@ const adminRegister = async (req, res) => {
 }
 
 const adminGetClubs = async (req, res) => {
+    const { email,secretKey } = req.user;
+    const adminUser = await Admin.findOne(email);
+    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
     Event.distinct("clubName").then(data => {
         res.status(201).send({ data: data });
     }).catch(err => {
