@@ -73,7 +73,7 @@ const register = async (req, res) => {
             const userCurr = User.findOne({ email });
             const id = userCurr._id;
             const token = jwt.sign({ email, id }, process.env.JWT_SECRET, { expiresIn: "1m" });
-            console.log(id)
+            // console.log(id)
             req.app.locals.registerSession.filter(userss => userss !== email);
             res.status(201).send({ msg: "registered successfully", token, events: [] })
         }).catch(err => {
@@ -96,7 +96,7 @@ const authUser = async (req, res, next) => {
         const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
 
         req.user = decodedToken;
-        console.log(decodedToken)
+        // console.log(decodedToken)
 
         next();
     }
@@ -123,7 +123,7 @@ const updateEvent = async (req, res) => {
                                 users: [email]
                             })
                         } else {
-                            console.log("event exists");
+                            // console.log("event exists");
                             const eventRegisteredUsers = await Event.findOne({ name: currEvent });
                             const userList = eventRegisteredUsers.users;
                             await Event.findOneAndUpdate({ name: currEvent }, { users: [...userList, email] })
@@ -152,7 +152,7 @@ const deleteEvent = async (req, res) => {
             const prevEvent = userExist.events;
             if (prevEvent.indexOf(currEvent) !== -1) {
                 const newEvents = prevEvent.filter(items => items !== currEvent);
-                console.log(newEvents);
+                // console.log(newEvents);
                 await User.findOneAndUpdate({ email }, { events: newEvents })
                     .then(async () => {
                         const eventExist = await Event.findOne({ name: currEvent });
@@ -321,7 +321,7 @@ const verifyToken = async (req, res) => {
             if (err) return "token expired";
             return res;
         })
-        console.log(userstatus);
+        // console.log(userstatus);
         if (userstatus === "token expired") return res.status(401).send({ data: userstatus });
         return res.status(201).send({ data: "valid token" });
     } catch (err) {
@@ -400,7 +400,7 @@ const adminGetEvents = async (req, res) => {
         const { club } = req.params;
         Event.find({ clubName: club }, { name: 1, _id: 0 }).then(data => {
             const events = data.map((e) => { return e.name })
-            console.log(events);
+            // console.log(events);
             res.status(201).send({ data: events });
         }).catch(err => {
             res.send(err);
@@ -416,7 +416,7 @@ const getUserDetailsAdmin = async (req, res) => {
     if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
         // const { email } = req.body;
         User.findOne({ email }, { password: 0, _id: 0, __v: 0 }).then(data => {
-            console.log(data);
+            // console.log(data);
             res.status(201).send({ data });
         }).catch(err => {
             res.send(err);
@@ -431,7 +431,7 @@ const adminGetAllUsers = async (req,res) =>{
     const adminUser = await Admin.findOne({email});
     if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
     await User.find({},{_id:0,events:0,password:0,__v:0}).then(data=>{
-        console.log(data)
+        // console.log(data)
         return res.status(201).json({data});
     })
 }
@@ -496,7 +496,7 @@ const cosplayRegisterUpload = async (req, res) => {
     try {
         const fileName = req.file.filename;
         const { email, name, phone, gender, cosplayCharacter } = req.body;
-        console.log(email,name,phone,gender,cosplayCharacter,fileName);
+        // console.log(email,name,phone,gender,cosplayCharacter,fileName);
         const oldUser = await Cosplay.findOne({ email });
         if (oldUser) {
             return res.status(401).send({ msg: "already registered" });  
@@ -536,7 +536,7 @@ const cosplayVerify = async (req, res) => {
         }).catch (err=>{
             result = { result : "not registered"};
         })
-            console.log(data);
+            // console.log(data);
             return res.status(201).send({ data:data,result:result });
         })
     } catch (err) {
@@ -594,7 +594,7 @@ const sonaVerify = async (req, res) => {
         }).catch (err=>{
             result = { result : "not registered"};
         })
-            console.log(data);
+            // console.log(data);
             return res.status(201).send({ data:data,result:result });
         })
     } catch (err) {
