@@ -430,7 +430,7 @@ const adminGetAllUsers = async (req,res) =>{
     const { email,secretKey } = req.user;
     const adminUser = await Admin.findOne({email});
     if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
-    await User.find({},{_id:0,,password:0,__v:0}).then(data=>{
+    await User.find({},{_id:0,password:0,__v:0}).then(data=>{
         // console.log(data)
         return res.status(201).json({data});
     })
