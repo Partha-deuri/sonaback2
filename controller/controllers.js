@@ -366,7 +366,7 @@ const adminRegister = async (req, res) => {
                 password: encryptedPassword,
                 phone
             }).then(() => {
-                const token = jwt.sign({ email, name }, process.env.JWT_SECRET, { expiresIn: "12h" });
+                const token = jwt.sign({ email, name, secretKey: ADMIN_SECRETKEY }, process.env.JWT_SECRET, { expiresIn: "12h" });
                 res.status(201).send({ msg: "registered successfully", token })
             }).catch(err => {
                 res.status(405).send({ msg: "admin not created" });
@@ -393,6 +393,9 @@ const adminGetClubs = async (req, res) => {
 
 const adminGetEvents = async (req, res) => {
     try {
+        const { email,secretKey } = req.user;
+    const adminUser = await Admin.findOne(email);
+    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
         const { club } = req.params;
         Event.find({ clubName: club }, { name: 1, _id: 0 }).then(data => {
             const events = data.map((e) => { return e.name })
@@ -407,7 +410,10 @@ const adminGetEvents = async (req, res) => {
 }
 const getUserDetailsAdmin = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email,secretKey } = req.user;
+    const adminUser = await Admin.findOne(email);
+    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
+        // const { email } = req.body;
         User.findOne({ email }, { password: 0, _id: 0, __v: 0 }).then(data => {
             console.log(data);
             res.status(201).send({ data });
@@ -420,6 +426,9 @@ const getUserDetailsAdmin = async (req, res) => {
 }
 
 const adminGetAllUsers = async (req,res) =>{
+    const { email,secretKey } = req.user;
+    const adminUser = await Admin.findOne(email);
+    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
     await User.find({},{_id:0,events:0,password:0,__v:0}).then(data=>{
         console.log(data)
         return res.status(201).json({data});
@@ -428,6 +437,9 @@ const adminGetAllUsers = async (req,res) =>{
 
 const adminGetUsers = async (req, res) => {
     try {
+        const { email,secretKey } = req.user;
+    const adminUser = await Admin.findOne(email);
+    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
         const { club, event } = req.params;
         Event.find({ clubName: club, name: event }, { _id: 0, users: 1 }).then(async (data) => {
             const userEmails = data[0].users;
