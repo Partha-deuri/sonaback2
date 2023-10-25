@@ -96,6 +96,7 @@ const authUser = async (req, res, next) => {
         const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
 
         req.user = decodedToken;
+        console.log(decodedToken)
 
         next();
     }
