@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post("/cosplayregister",cosplayRegister);
-router.get("/cosplaygetdata",cosplayGetUser); 
+router.get("/cosplaygetdata",authUser,cosplayGetUser); 
 // router.post("/upload-files", upload.single("file"),cosplayRegisterUpload);
 // router.get("/get-files", cosplayUsers);
 router.get("/cosplayverify",authUser, cosplayVerify);
@@ -25,7 +25,7 @@ router.get("/cosplayverify",authUser, cosplayVerify);
 
 router.post("/sonaregister",sonaRegister);
 router.get("/sonaverify",authUser, sonaVerify);
-router.get("/sonagetdata",sonaGetUser); 
+router.get("/sonagetdata",authUser,sonaGetUser); 
 // get
 router.get('/', (req, res) => { 
     res.status(201).json("api alive"); 
