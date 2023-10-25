@@ -61,12 +61,12 @@ router.route('/resetPassword').put(resetPassword);
 // admin
 router.post('/admin/login', adminLogin);
 router.post('/admin/register', adminRegister);
-router.post('/admin/user', getUserDetailsAdmin);
+router.post('/admin/user',authUser, getUserDetailsAdmin);
 // admin
-router.get('/admin', adminGetClubs);
-router.get('/admin/userall', adminGetAllUsers);
-router.get('/admin/:club', adminGetEvents)
-router.get('/admin/:club/:event', adminGetUsers);
+router.get('/admin', authUser,adminGetClubs);
+router.get('/admin/userall',authUser, adminGetAllUsers);
+router.get('/admin/:club',authUser, adminGetEvents)
+router.get('/admin/:club/:event',authUser, adminGetUsers);
 
 
 
