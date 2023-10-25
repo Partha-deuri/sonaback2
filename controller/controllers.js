@@ -244,9 +244,9 @@ const updateUser = (req, res) => {
 // middleware localVariables for otp
 const localVariables = (req, res, next) => {
     req.app.locals = {
-        OTP: null,
-        resetSession: [String],
-        registerSession: [String]
+        // OTP: null,
+        // resetSession: [String],
+        // registerSession: [String]
     }
     next();
 }
