@@ -55,7 +55,7 @@ const userForgotPassword = async (req, res) => {
 const register = async (req, res) => {
     // console.log(events);
     try {
-        if (req.app.locals.registerSession.indexOf(email)===-1) return res.status(440).send({ msg: "error", error: "Session expired!" });
+        // if (req.app.locals.registerSession.indexOf(email)===-1) return res.status(440).send({ msg: "error", error: "Session expired!" });
         const { name, email, password, phone, age, gender, institute, events } = req.body;
         const oldUser = await User.findOne({ email })
         if (oldUser) {
