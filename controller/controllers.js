@@ -219,7 +219,7 @@ const getEventUser = async (req, res) => {
 const getUserCount = async (req, res) => {
     try {
         const { club } = req.params;
-        console.log(club);
+        // console.log(club);
         Event.find({ clubName:club }, { name:1, users: 1 }).then((data) => {
             const countUser = data.map(eve=>{return {eventName : eve.name,count:eve.users.length}});
             return res.status(201).json({ data: countUser });
@@ -227,7 +227,7 @@ const getUserCount = async (req, res) => {
     } catch (err) {
         res.status(401).json({ error: err });
     }
-}
+} 
 
 
 const getUser = (req, res) => {
