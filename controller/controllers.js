@@ -13,12 +13,14 @@ require('../model/eventModel');
 require('../model/adminModel');
 require('../model/cosplayModel');
 require('../model/sonaModel');
+require('../model/otpModel');
 
 const User = mongoose.model('Users');
 const Event = mongoose.model('Events');
 const Admin = mongoose.model('Admins');
 const Cosplay = mongoose.model('Cosplay');
 const Sona = mongoose.model('Sona');
+const OTPmodel = mongoose.model('OTP');
 
 // middlewareverifyuser
 
@@ -27,7 +29,7 @@ const findUser = async (req, res) => {
     const { email } = req.query;
     try {
         const userExist = await User.findOne({ email });
-        // console.log(userExist.name);
+        console.log(userExist);
         if (!userExist) {
             return res.status(201).send({ msg: "user can be created" });
         }
@@ -53,15 +55,15 @@ const userForgotPassword = async (req, res) => {
 
 
 const register = async (req, res) => {
-    // console.log(events);
     try {
-        // if (req.app.locals.registerSession.indexOf(email)===-1) return res.status(440).send({ msg: "error", error: "Session expired!" });
         const { name, email, password, phone, age, gender, institute, events } = req.body;
         const oldUser = await User.findOne({ email })
         if (oldUser) {
-            // console.log("userfound")
             return res.status(500).send({ msg: "error", error: "User already Exist" })
         }
+        const otps = await OTPmodel.findOne({ oneid: 165 });
+        const otplist = otps.registerOTP;
+        if (otplist.indexOf(email) === -1) return res.status(440).send({ error: "Session expired!" });
         const encryptedPassword = await bcrypt.hash(password, 10);
         await User.create({
             name,
@@ -69,14 +71,14 @@ const register = async (req, res) => {
             password: encryptedPassword,
             phone,
             institute
-        }).then(() => {
+        }).then(async () => {
             const userCurr = User.findOne({ email });
-            const id = userCurr._id;
-            const token = jwt.sign({ email, id }, process.env.JWT_SECRET, { expiresIn: "1m" });
-            // console.log(id)
-            req.app.locals.registerSession.filter(userss => userss !== email);
+            const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "2h" });
+            const newList = otplist.filter(userss => userss !== email);
+            await OTPmodel.findOneAndUpdate({ oneid: 165 }, { registerOTP: newList })
             res.status(201).send({ msg: "registered successfully", token, events: [] })
         }).catch(err => {
+            console.log(err)
             res.status(405).send({ msg: "user not created" });
         })
     }
@@ -196,6 +198,7 @@ const login = async (req, res) => {
         res.status(400).json({ msg: "error", error: err })
     }
 }
+
 const getEventUser = async (req, res) => {
     try {
         const { token } = req.params;
@@ -207,6 +210,19 @@ const getEventUser = async (req, res) => {
         const { email } = userstatus;
         await User.findOne({ email }, { events: 1, _id: 0 }).then((data) => {
             return res.status(201).json({ data: data.events });
+        })
+    } catch (err) {
+        res.status(401).json({ error: err });
+    }
+}
+
+const getUserCount = async (req, res) => {
+    try {
+        const { club } = req.params;
+        console.log(club);
+        Event.find({ clubName:club }, { name:1, users: 1 }).then((data) => {
+            const countUser = data.map(eve=>{return {eventName : eve.name,count:eve.users.length}});
+            return res.status(201).json({ data: countUser });
         })
     } catch (err) {
         res.status(401).json({ error: err });
@@ -260,15 +276,32 @@ const generateOTP = async (req, res) => {
         res.send({ status: "error", error: "unable to generate otp" });
     }
 }
-const otpRegister = async (req,res) =>{
-    const {email} = req.body;
-    req.app.locals.registerSession = [...req.app.locals.registerSession, email];
-    res.status(201).send({msg:"otp verified"})
+
+const otpRegister = async (req, res) => {
+    const { email } = req.body;
+    const otps = await OTPmodel.findOne({ oneid: 165 });
+    const otplist = otps.registerOTP;
+    if (otplist.indexOf(email) === -1) {
+        const newList = [...otplist, email];
+        await OTPmodel.findOneAndUpdate({ oneid: 165 }, { registerOTP: newList })
+        res.status(201).send({ msg: "otp verified" })
+    }
+    else {
+        res.status(404).send({ msg: "error" })
+    }
 }
-const otpReset = async (req,res) =>{
-    const {email} = req.body;
-    req.app.locals.reaetSession = [...req.app.locals.registerSession, email];
-    res.status(201).send({msg:"otp verified"})
+const otpReset = async (req, res) => {
+    const { email } = req.body;
+    const otps = await OTPmodel.findOne({ oneid: 165 });
+    const otplist = otps.resetOTP;
+    if (otplist.indexOf(email) === -1) {
+        const newList = [...otplist, email];
+        await OTPmodel.findOneAndUpdate({ oneid: 165 }, { resetOTP: newList })
+        res.status(201).send({ msg: "otp verified" })
+    }
+    else {
+        res.status(404).send({ msg: "error" })
+    }
 }
 
 const verifyOTP = async (req, res) => {
@@ -293,13 +326,16 @@ const createResetSession = async (req, res) => {
 const resetPassword = async (req, res) => {
     try {
         const { email, password } = req.body;
-        // if (req.app.locals.resetSession.indexOf(email)===-1) return res.status(440).send({ error: "Session expired!" });
+        const otps = await OTPmodel.findOne({ oneid: 165 });
+        const otplist = otps.resetOTP;
+        if (otplist.indexOf(email) === -1) return res.status(440).send({ error: "Session expired!" });
         try {
             const userExist = await User.findOne({ email })
             if (userExist) {
                 const hashedPassword = await bcrypt.hash(password, 10)
-                await User.findOneAndUpdate({ email }, { password: hashedPassword }).then(() => {
-                    req.app.locals.resetSession.filter(userss => userss !== email);
+                await User.findOneAndUpdate({ email }, { password: hashedPassword }).then(async () => {
+                    const newList = otplist.filter(userss => userss !== email);
+                    await OTPmodel.findOneAndUpdate({ oneid: 165 }, { resetOTP: newList })
                     return res.status(201).send({ msg: "Record Updated...!" })
                 }).catch(err => {
                     return res.status(400).send({ error: "error" })
@@ -333,7 +369,7 @@ const verifyToken = async (req, res) => {
 // admin apis 
 const adminLogin = async (req, res) => {
     const { email, password } = req.body;
-    console.log(email,password," admin")
+    console.log(email, password, " admin")
     try {
         const admin = await Admin.findOne({ email });
         if (!admin) {
@@ -382,9 +418,9 @@ const adminRegister = async (req, res) => {
 }
 
 const adminGetClubs = async (req, res) => {
-    const { email,secretKey } = req.user;
-    const adminUser = await Admin.findOne({email});
-    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
+    const { email, secretKey } = req.user;
+    const adminUser = await Admin.findOne({ email });
+    if (!adminUser) return res.status(404).send({ msg: "admin doesn't exist" })
     Event.distinct("clubName").then(data => {
         res.status(201).send({ data: data });
     }).catch(err => {
@@ -394,9 +430,9 @@ const adminGetClubs = async (req, res) => {
 
 const adminGetEvents = async (req, res) => {
     try {
-        const { email,secretKey } = req.user;
-    const adminUser = await Admin.findOne({email});
-    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
+        const { email, secretKey } = req.user;
+        const adminUser = await Admin.findOne({ email });
+        if (!adminUser) return res.status(404).send({ msg: "admin doesn't exist" })
         const { club } = req.params;
         Event.find({ clubName: club }, { name: 1, _id: 0 }).then(data => {
             const events = data.map((e) => { return e.name })
@@ -411,9 +447,9 @@ const adminGetEvents = async (req, res) => {
 }
 const getUserDetailsAdmin = async (req, res) => {
     try {
-        const { email,secretKey } = req.user;
-    const adminUser = await Admin.findOne({email});
-    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
+        const { email, secretKey } = req.user;
+        const adminUser = await Admin.findOne({ email });
+        if (!adminUser) return res.status(404).send({ msg: "admin doesn't exist" })
         // const { email } = req.body;
         User.findOne({ email }, { password: 0, _id: 0, __v: 0 }).then(data => {
             // console.log(data);
@@ -426,21 +462,21 @@ const getUserDetailsAdmin = async (req, res) => {
     }
 }
 
-const adminGetAllUsers = async (req,res) =>{
-    const { email,secretKey } = req.user;
-    const adminUser = await Admin.findOne({email});
-    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
-    await User.find({},{_id:0,password:0,__v:0}).then(data=>{
+const adminGetAllUsers = async (req, res) => {
+    const { email, secretKey } = req.user;
+    const adminUser = await Admin.findOne({ email });
+    if (!adminUser) return res.status(404).send({ msg: "admin doesn't exist" })
+    await User.find({}, { _id: 0, password: 0, __v: 0 }).then(data => {
         // console.log(data)
-        return res.status(201).json({data});
+        return res.status(201).json({ data });
     })
 }
 
 const adminGetUsers = async (req, res) => {
     try {
-        const { email,secretKey } = req.user;
-    const adminUser = await Admin.findOne({email});
-    if(!adminUser) return res.status(404).send({msg:"admin doesn't exist"})
+        const { email, secretKey } = req.user;
+        const adminUser = await Admin.findOne({ email });
+        if (!adminUser) return res.status(404).send({ msg: "admin doesn't exist" })
         const { club, event } = req.params;
         Event.find({ clubName: club, name: event }, { _id: 0, users: 1 }).then(async (data) => {
             const userEmails = data[0].users;
@@ -460,13 +496,13 @@ const adminGetUsers = async (req, res) => {
 const multer = require("multer");
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./cosplayPayment"); 
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now();
-    cb(null, uniqueSuffix + file.originalname);
-  },
+    destination: function (req, file, cb) {
+        cb(null, "./cosplayPayment");
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now();
+        cb(null, uniqueSuffix + file.originalname);
+    },
 });
 const upload = multer({ storage: storage });
 
@@ -474,18 +510,18 @@ const upload = multer({ storage: storage });
 
 const cosplayRegister = async (req, res) => {
     try {
-        const { email, name, phone, gender, cosplayCharacter,paymentImg } = req.body;
+        const { email, name, phone, gender, cosplayCharacter, paymentImg } = req.body;
         // console.log(email,name,phone,gender,cosplayCharacter,paymentImg);
         const oldUser = await Cosplay.findOne({ email });
         if (oldUser) {
-            return res.status(401).send({ msg: "already registered" });  
+            return res.status(401).send({ msg: "already registered" });
         }
         await Cosplay.create({
-            name, email, phone,gender, cosplayCharacter, paymentImg
+            name, email, phone, gender, cosplayCharacter, paymentImg
         }).then(() => {
             return res.status(201).send({ msg: "registered successfully" })
         }).catch(err => {
-           return res.status(405).send({ msg: "Error" });
+            return res.status(405).send({ msg: "Error" });
         })
         // return res.status(201).send({data:"success"})
     } catch (error) {
@@ -499,14 +535,14 @@ const cosplayRegisterUpload = async (req, res) => {
         // console.log(email,name,phone,gender,cosplayCharacter,fileName);
         const oldUser = await Cosplay.findOne({ email });
         if (oldUser) {
-            return res.status(401).send({ msg: "already registered" });  
+            return res.status(401).send({ msg: "already registered" });
         }
         await Cosplay.create({
-            name, email, phone,gender, cosplayCharacter, paymentImg: fileName
+            name, email, phone, gender, cosplayCharacter, paymentImg: fileName
         }).then(() => {
             return res.status(201).send({ msg: "registered successfully" })
         }).catch(err => {
-           return res.status(405).send({ msg: "Error" });
+            return res.status(405).send({ msg: "Error" });
         })
         // return res.status(201).send({data:"success"})
     } catch (error) {
@@ -519,28 +555,28 @@ const cosplayGetUser = async (req, res) => {
             // console.log(data);
             res.status(201).send({ data });
         })
-    } catch (err) { 
+    } catch (err) {
         res.status(405).send({ error: err });
     }
 }
 const cosplayVerify = async (req, res) => {
     try {
         const { email } = req.user;
-        await User.findOne({email}, { _id: 0, __v: 0 ,password:0,events:0}).then(async data => {
-        await Cosplay.findOne({email}).then(res=>{
-            if(res==null){
-                result = { result : "not registered"};
-            }else{
-                result = { result : "registered"};
-            }
-        }).catch (err=>{
-            result = { result : "not registered"};
-        })
+        await User.findOne({ email }, { _id: 0, __v: 0, password: 0, events: 0 }).then(async data => {
+            await Cosplay.findOne({ email }).then(res => {
+                if (res == null) {
+                    result = { result: "not registered" };
+                } else {
+                    result = { result: "registered" };
+                }
+            }).catch(err => {
+                result = { result: "not registered" };
+            })
             // console.log(data);
-            return res.status(201).send({ data:data,result:result });
+            return res.status(201).send({ data: data, result: result });
         })
     } catch (err) {
-        res.status(405).send({ error: err }); 
+        res.status(405).send({ error: err });
     }
 }
 
@@ -555,14 +591,14 @@ const sonaRegister = async (req, res) => {
         // console.log(email,name,phone,gender,cosplayCharacter,paymentImg);
         const oldUser = await Sona.findOne({ email });
         if (oldUser) {
-            return res.status(401).send({ msg: "already registered" });  
+            return res.status(401).send({ msg: "already registered" });
         }
         await Sona.create({
-            name, email, phone,gender,age
+            name, email, phone, gender, age
         }).then(() => {
             return res.status(201).send({ msg: "registered successfully" })
         }).catch(err => {
-           return res.status(405).send({ msg: "Error" });
+            return res.status(405).send({ msg: "Error" });
         })
         // return res.status(201).send({data:"success"})
     } catch (error) {
@@ -577,28 +613,28 @@ const sonaGetUser = async (req, res) => {
             // console.log(data);
             res.status(201).send({ data });
         })
-    } catch (err) { 
+    } catch (err) {
         res.status(405).send({ error: err });
     }
 }
 const sonaVerify = async (req, res) => {
     try {
         const { email } = req.user;
-        await User.findOne({email}, { _id: 0, __v: 0 ,password:0,events:0}).then(async data => {
-        await Sona.findOne({email}).then(res=>{
-            if(res==null){
-                result = { result : "not registered"};
-            }else{
-                result = { result : "registered"};
-            }
-        }).catch (err=>{
-            result = { result : "not registered"};
-        })
+        await User.findOne({ email }, { _id: 0, __v: 0, password: 0, events: 0 }).then(async data => {
+            await Sona.findOne({ email }).then(res => {
+                if (res == null) {
+                    result = { result: "not registered" };
+                } else {
+                    result = { result: "registered" };
+                }
+            }).catch(err => {
+                result = { result: "not registered" };
+            })
             // console.log(data);
-            return res.status(201).send({ data:data,result:result });
+            return res.status(201).send({ data: data, result: result });
         })
     } catch (err) {
-        res.status(405).send({ error: err }); 
+        res.status(405).send({ error: err });
     }
 }
 
@@ -636,5 +672,6 @@ module.exports = {
     sonaVerify,
     sonaRegister,
     otpRegister,
-    otpReset
+    otpReset,
+    getUserCount
 }
