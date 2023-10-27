@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser, otpRegister, otpReset } = require('../controller/controllers.js');
+const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser, otpRegister, otpReset, getUserCount } = require('../controller/controllers.js');
 const { registerMail } = require('../controller/mailer.js');
 
 
@@ -32,18 +32,19 @@ router.get('/', (req, res) => {
 })
 
 router.get('/user/:id', getUser);
-router.get('/generateOTP', localVariables, generateOTP);
+router.get('/generateOTP', generateOTP);
 router.get('/verifyOTP', verifyOTP);
-router.get('/otpregister', otpRegister);
-router.get('/otpreset', otpReset);
-router.get('/findUser', findUser);
 router.get('/userExist', userForgotPassword)
+router.get('/findUser', findUser);
 router.get('/token/:token', verifyToken)
 router.get('/events/:token', getEventUser)
+router.get('/club/:club', getUserCount)
 
 // Post
 
 // router.post('/signup',signUp);
+router.post('/otpreset', otpReset);
+router.post('/otpregister', otpRegister);
 
 router.post('/register', register);
 
