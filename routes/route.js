@@ -42,7 +42,7 @@ router.get('/mod/club/:event',authUser, getModUsers)
 router.get('/mod/alluser',authUser, getModAllUsers)
 
 // Post
-router.post('/mod/register', modRegister);
+// router.post('/mod/register', modRegister);
 router.post('/mod/verify', modVerify);
 
 // router.post('/signup',signUp);
@@ -64,7 +64,7 @@ router.route('/resetPassword').put(resetPassword);
 
 // admin
 router.post('/admin/login', adminLogin);
-router.post('/admin/register', adminRegister);
+// router.post('/admin/register', adminRegister);
 router.post('/admin/user',authUser, getUserDetailsAdmin);
 // admin
 router.get('/admin', authUser,adminGetClubs);
