@@ -25,6 +25,18 @@ const OTPmodel = mongoose.model('OTP');
 const Mod = mongoose.model('Mods');
 
 // middlewareverifyuser
+const getModAllUsers = async (req, res) => {
+    const { clubName, secretKey } = req.user;
+    console.log(clubName, secretKey);
+    const modUser = await Mod.findOne({ clubName });
+    if (!modUser) return res.status(404).send({ msg: "mod doesn't exist" })
+    if (await bcrypt.compare(secretKey, modUser.secretKey)) {
+        await User.find({}, { _id: 0, password: 0, __v: 0 }).then(data => {
+
+            return res.status(201).json({ data });
+        })
+    }
+}
 
 const getModUsers = async (req, res) => {
     try {
@@ -39,7 +51,7 @@ const getModUsers = async (req, res) => {
             }).catch(err => {
                 return res.status(401).send({ error: "error" });
             })
-        }else{
+        } else {
             return res.status(401).send({ msg: "mod does not exist" });
         }
     } catch (err) {
@@ -56,7 +68,7 @@ const getModEvents = async (req, res) => {
                 const events = data.map((e) => { return e.name })
                 return res.status(201).send({ data: events });
             })
-        }else{
+        } else {
             return res.status(401).send({ msg: "error" });
         }
     } catch (err) {
@@ -66,10 +78,11 @@ const getModEvents = async (req, res) => {
 const modVerify = async (req, res) => {
     try {
         const { clubName, secretKey } = req.body;
+        console.log(clubName, secretKey);
         const modExist = await Mod.findOne({ clubName });
         if (!modExist) return res.status(404).send({ msg: "mod does not exist" });
         if (await bcrypt.compare(secretKey, modExist.secretKey)) {
-            const token = jwt.sign({ clubName, secretKey }, process.env.JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign({ clubName, secretKey }, process.env.JWT_SECRET, { expiresIn: "12h" });
             return res.status(201).send({ msg: "mod verified", token });
         }
         return res.status(401).send({ msg: "error" });
@@ -748,5 +761,6 @@ module.exports = {
     getModEvents,
     getModUsers,
     modVerify,
-    modRegister
+    modRegister,
+    getModAllUsers
 }
