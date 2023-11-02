@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser, otpRegister, otpReset, getUserCount, getModEvents, modVerify, modRegister, getModUsers } = require('../controller/controllers.js');
+const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser, otpRegister, otpReset, getUserCount, getModEvents, modVerify, modRegister, getModUsers, getModAllUsers } = require('../controller/controllers.js');
 const { registerMail } = require('../controller/mailer.js');
 
 
@@ -39,6 +39,7 @@ router.get('/events/:token', getEventUser)
 router.get('/club/:club', getUserCount)
 router.get('/mod/club',authUser, getModEvents)
 router.get('/mod/club/:event',authUser, getModUsers)
+router.get('/mod/alluser',authUser, getModAllUsers)
 
 // Post
 router.post('/mod/register', modRegister);
