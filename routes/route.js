@@ -1,9 +1,9 @@
 const router = require('express').Router();
-const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser, otpRegister, otpReset, getUserCount } = require('../controller/controllers.js');
+const { register, updateEvent, login, authUser, localVariables, generateOTP, resetPassword, getUser, verifyOTP, findUser, adminLogin, adminGetClubs, adminGetEvents, adminGetUsers, adminRegister, userForgotPassword, getUserDetailsAdmin, verifyToken, getEventUser, deleteEvent, cosplayRegister, cosplayUsers, cosplayRegisterUpload, cosplayVerify, cosplayGetUser, adminGetAllUsers, sonaRegister, sonaVerify, sonaGetUser, otpRegister, otpReset, getUserCount, getModEvents, modVerify, modRegister, getModUsers } = require('../controller/controllers.js');
 const { registerMail } = require('../controller/mailer.js');
 
 
-const multer = require("multer");
+const multer = require("multer"); 
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -18,8 +18,6 @@ const upload = multer({ storage: storage });
 
 router.post("/cosplayregister",cosplayRegister);
 router.get("/cosplaygetdata",authUser,cosplayGetUser); 
-// router.post("/upload-files", upload.single("file"),cosplayRegisterUpload);
-// router.get("/get-files", cosplayUsers);
 router.get("/cosplayverify",authUser, cosplayVerify);
 
 
@@ -32,15 +30,19 @@ router.get('/', (req, res) => {
 })
 
 router.get('/user/:id', getUser);
-router.get('/generateOTP', generateOTP);
+router.get('/generateOTP', generateOTP); 
 router.get('/verifyOTP', verifyOTP);
 router.get('/userExist', userForgotPassword)
 router.get('/findUser', findUser);
 router.get('/token/:token', verifyToken)
 router.get('/events/:token', getEventUser)
 router.get('/club/:club', getUserCount)
+router.get('/mod/club',authUser, getModEvents)
+router.get('/mod/club/:event',authUser, getModUsers)
 
 // Post
+router.post('/mod/register', modRegister);
+router.post('/mod/verify', modVerify);
 
 // router.post('/signup',signUp);
 router.post('/otpreset', otpReset);
