@@ -14,6 +14,7 @@ require('../model/adminModel');
 require('../model/cosplayModel');
 require('../model/sonaModel');
 require('../model/otpModel');
+require('../model/modModel');
 
 const User = mongoose.model('Users');
 const Event = mongoose.model('Events');
@@ -21,8 +22,78 @@ const Admin = mongoose.model('Admins');
 const Cosplay = mongoose.model('Cosplay');
 const Sona = mongoose.model('Sona');
 const OTPmodel = mongoose.model('OTP');
+const Mod = mongoose.model('Mods');
 
 // middlewareverifyuser
+
+const getModUsers = async (req, res) => {
+    try {
+        const { clubName, secretKey } = req.user;
+        const modExist = await Mod.findOne({ clubName });
+        if (!modExist) return res.status(404).send({ msg: "mod does not exist" });
+        const { event } = req.params;
+        if (await bcrypt.compare(secretKey, modExist.secretKey)) {
+            await Event.find({ clubName, name: event }, { _id: 0, users: 1 }).then(async (data) => {
+                const userEmails = data[0].users;
+                return res.status(201).json({ data: userEmails });
+            }).catch(err => {
+                return res.status(401).send({ error: "error" });
+            })
+        }else{
+            return res.status(401).send({ msg: "mod does not exist" });
+        }
+    } catch (err) {
+        return res.status(404).send({ error: err });
+    }
+}
+const getModEvents = async (req, res) => {
+    try {
+        const { clubName, secretKey } = req.user;
+        const modExist = await Mod.findOne({ clubName });
+        if (!modExist) return res.status(404).send({ msg: "mod does not exist" });
+        if (await bcrypt.compare(secretKey, modExist.secretKey)) {
+            await Event.find({ clubName }, { name: 1, _id: 0 }).then(data => {
+                const events = data.map((e) => { return e.name })
+                return res.status(201).send({ data: events });
+            })
+        }else{
+            return res.status(401).send({ msg: "error" });
+        }
+    } catch (err) {
+        return res.status(404).send({ error: err });
+    }
+}
+const modVerify = async (req, res) => {
+    try {
+        const { clubName, secretKey } = req.body;
+        const modExist = await Mod.findOne({ clubName });
+        if (!modExist) return res.status(404).send({ msg: "mod does not exist" });
+        if (await bcrypt.compare(secretKey, modExist.secretKey)) {
+            const token = jwt.sign({ clubName, secretKey }, process.env.JWT_SECRET, { expiresIn: "1h" });
+            return res.status(201).send({ msg: "mod verified", token });
+        }
+        return res.status(401).send({ msg: "error" });
+    } catch (err) {
+        res.status(404).send({ msg: "mod does not exist" });
+    }
+}
+
+const modRegister = async (req, res) => {
+    try {
+        const { clubName, secretKey } = req.body;
+        const modExist = await Mod.findOne({ clubName });
+        if (modExist) return res.status(404).send({ msg: "mod exist" });
+        const encryptedSecretKey = await bcrypt.hash(secretKey, 10);
+        await Mod.create({
+            clubName: clubName,
+            secretKey: encryptedSecretKey
+        }).then(() => {
+            res.status(201).send({ msg: "mod created" })
+        })
+    } catch (err) {
+        res.status(404).send({ msg: "error" });
+    }
+}
 
 
 const findUser = async (req, res) => {
@@ -220,14 +291,14 @@ const getUserCount = async (req, res) => {
     try {
         const { club } = req.params;
         // console.log(club);
-        Event.find({ clubName:club }, { name:1, users: 1 }).then((data) => {
-            const countUser = data.map(eve=>{return {eventName : eve.name,count:eve.users.length}});
+        Event.find({ clubName: club }, { name: 1, users: 1 }).then((data) => {
+            const countUser = data.map(eve => { return { eventName: eve.name, count: eve.users.length } });
             return res.status(201).json({ data: countUser });
         })
     } catch (err) {
         res.status(401).json({ error: err });
     }
-} 
+}
 
 
 const getUser = (req, res) => {
@@ -673,5 +744,9 @@ module.exports = {
     sonaRegister,
     otpRegister,
     otpReset,
-    getUserCount
+    getUserCount,
+    getModEvents,
+    getModUsers,
+    modVerify,
+    modRegister
 }
